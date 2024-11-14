@@ -166,11 +166,14 @@ const selectStatus = (selectedStatus: string, task: any) => {
 
 const formatDate = (date: string) => moment(date).format('LL');
 
+
 const resetForm = () => {
   Object.keys(formData).forEach(key => {
     (formData as any)[key] = '';
   });
+  formData.userId = 1;
 };
+
 
 const openTaskDialog = (item: any = null) => {
   resetForm();
@@ -182,17 +185,18 @@ const openTaskDialog = (item: any = null) => {
 const handleSaveTask = () => {
   if (!formData.title || !formData.priority || !formData.startDate || !formData.endDate) return;
 
-  const updatedTask = { ...formData, id: selectedTaskId.value };
+  const updatedTask = { ...formData, id: selectedTaskId.value, userId: formData.userId };
 
   if (selectedTaskId.value) {
     missionStore.updateTask(updatedTask);
   } else {
-    missionStore.addTask({ ...formData, id: Date.now() });
+    missionStore.addTask({ ...formData, id: Date.now(), userId: formData.userId });
   }
 
   missionStore.dialog = false;
   updateTaskGroups();
 };
+
 
 watchEffect(() => {
   taskGroups.value = [
