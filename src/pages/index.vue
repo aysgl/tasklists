@@ -4,10 +4,10 @@
       <VCard variant="tonal" :color="taskGroup.color" height="100%">
         <VCardTitle class="font-weight-bold text-body-1">
           {{ taskGroup.title }}
-          <VBadge inline :color="taskGroup.color" :content="taskGroup.tasks.length" />
+          <VBadge inline :color="taskGroup.color" :content="taskGroup?.tasks?.length" />
         </VCardTitle>
         <VCardText style="white-space: normal; min-width: 400px;">
-          <div v-for="(item, idx) in taskGroup.tasks" :key="idx" class="border rounded mb-2 pa-3 text-black">
+          <div v-for="(item, idx) in taskGroup?.tasks" :key="idx" class="border rounded mb-2 pa-3 text-black">
             <div class="w-100 d-flex justify-space-between align-center ga-2">
               <div class="font-weight-bold">
                 <Priority :priority="item.priority" />
@@ -26,7 +26,7 @@
             <small class="text-medium-emphasis">
               {{ formatDate(item.startDate) }} - {{ formatDate(item.endDate) }}
             </small>
-            <div class="mb-4">{{ item.description }}</div>
+            <div class="mb-4">{{ item?.description }}</div>
             <div class="d-flex align-center justify-space-between ga-2">
               <AssignAvatar :assignedBy="item.assignedBy" :assignedTo="item.assignedTo" />
               <v-menu open-on-hover>
@@ -121,16 +121,28 @@ const formData = reactive({
 
 const status = ref(['başarılı', 'başarısız', 'atanmış']);
 
-const taskGroups = ref([
-  { title: 'Todo', status: 'atanmış', color: 'primary' },
-  { title: 'Success', status: 'başarılı', color: 'success' },
-  { title: 'Unsuccess', status: 'başarısız', color: 'error' },
-  { title: 'Due Success', status: 'başarılı', color: 'success' },
-  { title: 'Due Unsuccess', status: 'başarısız', color: 'error' }
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  priority: string;
+  startDate: string;
+  endDate: string;
+  assignedBy: string;
+  assignedTo: string;
+  status: string;
+  userId: number;
+}
+
+const taskGroups = ref<{ title: string; status: string; color: string; tasks: Task[] }[]>([
+  { title: 'Todo', status: 'atanmış', color: 'primary', tasks: [] },
+  { title: 'Success', status: 'başarılı', color: 'success', tasks: [] },
+  { title: 'Unsuccess', status: 'başarısız', color: 'error', tasks: [] },
+  { title: 'Due Success', status: 'başarılı', color: 'success', tasks: [] },
+  { title: 'Due Unsuccess', status: 'başarısız', color: 'error', tasks: [] }
 ]);
 
-const filteredTaskGroups = computed(() => taskGroups.value.filter((group: any) => group.tasks.length > 0));
-
+const filteredTaskGroups = computed(() => taskGroups.value.filter((group) => group.tasks && group.tasks.length > 0));
 
 const updateTaskGroups = () => {
   taskGroups.value.forEach((group: any) => {
@@ -142,9 +154,10 @@ const updateTaskGroups = () => {
   });
 };
 
+
 const formatDate = (date: string) => moment(date).format('LL');
 
-const selectStatus = (selectedStatus: string, task: any) => {
+const selectStatus = (selectedStatus: string, task: Task) => {
   task.status = selectedStatus;
   updateTaskGroups();
 };
@@ -163,12 +176,12 @@ const openTaskDialog = (item: any = null) => {
   missionStore.dialog = true;
 };
 
-const isTaskEditable = (task: any) => task.userId === formData.userId;
+const isTaskEditable = (task: Task) => task.userId === formData.userId;
 
 const handleSaveTask = () => {
   if (!formData.title || !formData.priority || !formData.startDate || !formData.endDate) return;
 
-  const updatedTask = { ...formData, id: selectedTaskId.value, userId: formData.userId };
+  const updatedTask: Task = { ...formData, id: selectedTaskId.value || 0, userId: formData.userId };
 
   if (selectedTaskId.value) {
     missionStore.updateTask(updatedTask);
