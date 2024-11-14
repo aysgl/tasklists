@@ -55,8 +55,8 @@
         </p>
         <VCard>
           <VCardText>
-            <div v-if="selectedUser?.tasks.length > 0" v-for="(task, index) in selectedUser.tasks" :key="index"
-              class="py-2">
+            <div v-if="selectedUser && selectedUser.tasks.length > 0" v-for="(task, index) in selectedUser.tasks"
+              :key="index" class="py-2">
               <div class="w-100 d-flex justify-space-between align-center ga-2">
                 <div class="font-weight-bold">
                   {{ task.title }}
@@ -68,9 +68,9 @@
               <div class="mb-3">{{ task.description }}</div>
               <div class="d-flex align-center ga-2">
                 <AssignAvatar :assignedBy="task.assignedBy" :assignedTo="task.assignedTo" />
-                <div>{{ task.taskStatus }}</div>
+                <div>{{ task.status }}</div>
               </div>
-              <v-divider class="mt-4" v-if="index !== selectedUser.tasks.length - 1"></v-divider>
+              <v-divider class="mt-4" v-if="index !== selectedUser?.tasks.length - 1"></v-divider>
             </div>
             <div v-else>
               Henüz görev eklenmedi
@@ -93,15 +93,33 @@ const userStore = useUsers();
 const missionStore = useMission();
 const isTasksDialogOpen = ref(false);
 const isNewUserDialogOpen = ref(false);
-const selectedUser = ref(null);
+interface UserTask {
+  userId: number;
+  fullName: string;
+  username: string;
+  status: string;
+  delayedTasksCount: number;
+  tasks: Array<{
+    title: string;
+    startDate: string;
+    endDate: string;
+    description: string;
+    assignedBy: string;
+    assignedTo: string;
+    status: string;
+  }>;
+}
+
+const selectedUser = ref<UserTask | null>(null);
+
 
 const headers = [
-  { title: "İsim Soyisim", align: "start", key: "fullName" },
-  { title: "Kullanıcı Adı", align: "start", key: "username" },
-  { title: "Görev Durumu", key: "status" },
-  { title: "Geciken Görev Sayısı", key: "delayedTasksCount" },
-  { title: "", key: "actions", sortable: false, align: "end" },
-];
+  { title: "İsim Soyisim", align: "start", key: "fullName", value: "fullName" as const },
+  { title: "Kullanıcı Adı", align: "start", key: "username", value: "username" as const },
+  { title: "Görev Durumu", align: "start", key: "status", value: "status" as const },
+  { title: "Geciken Görev Sayısı", align: "start", key: "delayedTasksCount", value: "delayedTasksCount" as const },
+  { title: "", sortable: false, align: "end", key: "actions", value: "actions" as const },
+] as const;
 
 const userTasks = computed(() => {
   const userTaskMap = new Map();
@@ -113,7 +131,7 @@ const userTasks = computed(() => {
           userId: user.id,
           fullName: user.fullName,
           username: user.username,
-          status: task.status || "atanmış",
+          status: "atanmış",
           delayedTasksCount: 0,
           tasks: [],
         });
@@ -121,14 +139,13 @@ const userTasks = computed(() => {
 
       userTaskMap.get(user.id).tasks.push({ ...task });
 
-      // Görev bitiş tarihi geçmişse geciken görev sayısını artır
       if (moment(task.endDate).isBefore(moment())) {
         userTaskMap.get(user.id).delayedTasksCount += 1;
       }
     }
   });
 
-  return userStore.users.map(user => ({
+  return userStore.users.map((user: any) => ({
     userId: user.id,
     fullName: user.fullName,
     username: user.username,
@@ -151,8 +168,7 @@ const createNewUser = () => {
     id: newId,
     username: newUser.value.name,
     fullName: newUser.value.fullName,
-    status: "atanmış",
-    delayedTasksCount: 0,
+    tasks: []
   });
 
   newUser.value.name = "";
@@ -160,13 +176,14 @@ const createNewUser = () => {
   userStore.dialog = false;
 };
 
-const viewTasks = (userId) => {
+const viewTasks = (userId: number) => {
   const user = userTasks.value.find(user => user.userId === userId);
   if (user) {
     selectedUser.value = user;
     isTasksDialogOpen.value = true;
   }
 };
+
 </script>
 
 <style>

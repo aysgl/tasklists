@@ -146,13 +146,13 @@ const filters = reactive({
 });
 
 const headers = [
-  { title: 'Görev Adı', align: 'start', key: 'title' },
-  { title: 'Atayan Kullanıcı', key: 'assignedBy' },
-  { title: 'Atanan Kullanıcı', key: 'assignedTo' },
-  { title: 'Öncelik', key: 'priority' },
-  { title: 'Durum', key: 'status' },
-  { title: '', key: 'action', align: "end" }
-];
+  { title: 'Görev Adı', key: 'title', value: 'title', align: 'start' as const },
+  { title: 'Atayan Kullanıcı', key: 'assignedBy', value: 'assignedBy', align: 'start' as const },
+  { title: 'Atanan Kullanıcı', key: 'assignedTo', value: 'assignedTo', align: 'start' as const },
+  { title: 'Öncelik', key: 'priority', value: 'priority', align: 'center' as const },
+  { title: 'Durum', key: 'status', value: 'status', align: 'center' as const },
+  { title: '', key: 'action', value: 'action', align: 'end' as const, sortable: false },
+] as const;
 
 const selectedTaskId = ref(null);
 
@@ -171,11 +171,11 @@ const handleTask = () => {
   missionStore.dialog = false;
 };
 
-const isValidDate = (date) => {
+const isValidDate = (date: any) => {
   return moment(date, "YYYY-MM-DD", true).isValid();
 };
 
-const editTask = (item) => {
+const editTask = (item: any) => {
   selectedTaskId.value = item.id;
   filters.title = item.title;
   filters.description = item.description;

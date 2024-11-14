@@ -1,7 +1,7 @@
 <template>
   <div class="scrollable">
     <div v-for="(taskGroup, index) in filteredTaskGroups" :key="index" class="col">
-      <VCard :variant="taskGroup.variant" :color="taskGroup.color" height="100%">
+      <VCard variant="tonal" :color="taskGroup.color" height="100%">
         <VCardTitle class="font-weight-bold text-body-1">
           {{ taskGroup.title }}
           <VBadge inline :color="taskGroup.color" :content="taskGroup.tasks.length" />
@@ -88,7 +88,7 @@
         </VForm>
         <VCardActions class="pa-0">
           <VSpacer />
-          <VBtn color="primary" variant="tonal" @click="closeDialog">İptal</VBtn>
+          <VBtn color="primary" variant="tonal" @click="missionStore.dialog = false">İptal</VBtn>
           <VBtn color="primary" variant="flat" @click="handleSaveTask">
             {{ selectedTaskId ? "Güncelle" : "Ekle" }}
           </VBtn>
@@ -121,41 +121,41 @@ const formData = reactive({
   userId: 1
 });
 
-const status = ref([
+const status = ref<{ status: string }[]>([
   { status: 'başarılı' },
   { status: 'başarısız' },
   { status: 'atanmış' },
 ]);
 
-const filteredTaskGroups = computed(() => taskGroups.value);
+const tasks = ref(missionStore.missions.filter((t: any) => t.status === 'atanmış'));
+const completedTasks = ref(missionStore.missions.filter((t: any) => t.status === 'başarılı'));
+const unsuccessfulTasks = ref(missionStore.missions.filter((t: any) => t.status === 'başarısız'));
+const overdueSuccessfulTasks = ref(completedTasks.value.filter((t: any) => moment(t.endDate).isBefore(moment())));
+const overdueUnsuccessfulTasks = ref(unsuccessfulTasks.value.filter((t: any) => moment(t.endDate).isBefore(moment())));
 
-const tasks = computed(() => missionStore.missions.filter((t: any) => t.status === 'atanmış'));
-const completedTasks = computed(() => missionStore.missions.filter((t: any) => t.status === 'başarılı'));
-const unsuccessfulTasks = computed(() => missionStore.missions.filter((t: any) => t.status === 'başarısız'));
-const overdueSuccessfulTasks = computed(() => completedTasks.value.filter((t: any) => moment(t.endDate).isBefore(moment())));
-const overdueUnsuccessfulTasks = computed(() => unsuccessfulTasks.value.filter((t: any) => moment(t.endDate).isBefore(moment())));
-
-const taskGroups = computed(() => [
-  { title: 'Todo', tasks: tasks.value, color: 'primary', variant: 'tonal' },
-  { title: 'Success', tasks: completedTasks.value, color: 'success', variant: 'tonal' },
-  { title: 'Unsuccess', tasks: unsuccessfulTasks.value, color: 'error', variant: 'tonal' },
-  { title: 'Due Success', tasks: overdueSuccessfulTasks.value, color: 'success', variant: 'tonal' },
-  { title: 'Due Unsuccess', tasks: overdueUnsuccessfulTasks.value, color: 'error', variant: 'tonal' }
+const taskGroups = ref([
+  { title: 'Todo', tasks: tasks.value, color: 'primary' },
+  { title: 'Success', tasks: completedTasks.value, color: 'success' },
+  { title: 'Unsuccess', tasks: unsuccessfulTasks.value, color: 'error' },
+  { title: 'Due Success', tasks: overdueSuccessfulTasks.value, color: 'success' },
+  { title: 'Due Unsuccess', tasks: overdueUnsuccessfulTasks.value, color: 'error' }
 ]);
 
+const filteredTaskGroups = computed(() => taskGroups.value);
+
 const updateTaskGroups = () => {
-  tasks.value = missionStore.missions.filter(t => t.status === 'atanmış');
-  completedTasks.value = missionStore.missions.filter(t => t.status === 'başarılı');
-  unsuccessfulTasks.value = missionStore.missions.filter(t => t.status === 'başarısız');
-  overdueSuccessfulTasks.value = completedTasks.value.filter(t => moment(t.endDate).isBefore(moment()));
-  overdueUnsuccessfulTasks.value = unsuccessfulTasks.value.filter(t => moment(t.endDate).isBefore(moment()));
+  tasks.value = missionStore.missions.filter((t: any) => t.status === 'atanmış');
+  completedTasks.value = missionStore.missions.filter((t: any) => t.status === 'başarılı');
+  unsuccessfulTasks.value = missionStore.missions.filter((t: any) => t.status === 'başarısız');
+  overdueSuccessfulTasks.value = completedTasks.value.filter((t: any) => moment(t.endDate).isBefore(moment()));
+  overdueUnsuccessfulTasks.value = unsuccessfulTasks.value.filter((t: any) => moment(t.endDate).isBefore(moment()));
 
   taskGroups.value = [
-    { title: 'Todo', tasks: tasks.value, color: 'primary', variant: 'tonal' },
-    { title: 'Success', tasks: completedTasks.value, color: 'success', variant: 'tonal' },
-    { title: 'Unsuccess', tasks: unsuccessfulTasks.value, color: 'error', variant: 'tonal' },
-    { title: 'Due Success', tasks: overdueSuccessfulTasks.value, color: 'success', variant: 'tonal' },
-    { title: 'Due Unsuccess', tasks: overdueUnsuccessfulTasks.value, color: 'error', variant: 'tonal' }
+    { title: 'Todo', tasks: tasks.value, color: 'primary' },
+    { title: 'Success', tasks: completedTasks.value, color: 'success' },
+    { title: 'Unsuccess', tasks: unsuccessfulTasks.value, color: 'error' },
+    { title: 'Due Success', tasks: overdueSuccessfulTasks.value, color: 'success' },
+    { title: 'Due Unsuccess', tasks: overdueUnsuccessfulTasks.value, color: 'error' }
   ];
 };
 
@@ -167,7 +167,9 @@ const selectStatus = (selectedStatus: string, task: any) => {
 const formatDate = (date: string) => moment(date).format('LL');
 
 const resetForm = () => {
-  Object.keys(formData).forEach(key => (formData[key] = ''));
+  Object.keys(formData).forEach(key => {
+    (formData as any)[key] = '';
+  });
 };
 
 const openTaskDialog = (item: any = null) => {
@@ -194,11 +196,11 @@ const handleSaveTask = () => {
 
 watchEffect(() => {
   taskGroups.value = [
-    { title: 'Todo', tasks: tasks.value, color: 'primary', variant: 'tonal' },
-    { title: 'Success', tasks: completedTasks.value, color: 'success', variant: 'tonal' },
-    { title: 'Unsuccess', tasks: unsuccessfulTasks.value, color: 'error', variant: 'tonal' },
-    { title: 'Due Success', tasks: overdueSuccessfulTasks.value, color: 'success', variant: 'tonal' },
-    { title: 'Due Unsuccess', tasks: overdueUnsuccessfulTasks.value, color: 'error', variant: 'tonal' }
+    { title: 'Todo', tasks: tasks.value, color: 'primary' },
+    { title: 'Success', tasks: completedTasks.value, color: 'success' },
+    { title: 'Unsuccess', tasks: unsuccessfulTasks.value, color: 'error' },
+    { title: 'Due Success', tasks: overdueSuccessfulTasks.value, color: 'success' },
+    { title: 'Due Unsuccess', tasks: overdueUnsuccessfulTasks.value, color: 'error' }
   ];
 });
 
