@@ -36,10 +36,5 @@
 
 <script setup lang="ts">
 import { IconCategoryPlus, IconFolders, IconUsers, IconCalendar } from "@tabler/icons-vue";
-import { useUsers } from "@/stores/users";
-import { useMission } from "@/stores/mission";
-
-const userStore = useUsers();
-const missionStore = useMission();
 const drawer = ref(false);
 </script>
