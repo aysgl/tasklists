@@ -6,7 +6,7 @@
           {{ taskGroup.title }}
           <VBadge inline :color="taskGroup.color" :content="taskGroup?.tasks?.length" />
         </VCardTitle>
-        <VCardText style="white-space: normal; min-width: 400px;">
+        <VCardText style="white-space: normal;">
           <div v-for="(item, idx) in taskGroup?.tasks" :key="idx" class="border rounded mb-2 pa-3 text-black">
             <div class="w-100 d-flex justify-space-between align-center ga-2">
               <div class="font-weight-bold">
@@ -211,11 +211,11 @@ watch(() => formData.status, updateTaskGroups);
   }
 
   .col {
-    max-width: 40%;
+    min-width: 40%;
     min-height: 600px;
 
     @media screen and (max-width: 600px) {
-      max-width: 100%;
+      min-width: 100%;
     }
   }
 

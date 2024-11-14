@@ -1,7 +1,8 @@
 <template>
   <VCard color="surface" flat>
     <VCardText class="pa-8">
-      <v-data-table :headers="headers" :items="userTasks" item-key="id" :items-per-page="10">
+      <v-data-table :headers="headers" :items="userTasks" item-key="id" :items-per-page="10"
+        :mobile="breakpoint?.xs?.value">
         <template v-slot:[`item.fullName`]="{ item }">
           <VAvatar color="primary" variant="tonal">
             {{ item.fullName?.slice(0, 1) }}
@@ -88,11 +89,13 @@ import { useMission } from "@/stores/mission";
 import { useUsers } from "@/stores/users";
 import { getStatusColor } from "@/utils/common";
 import moment from "moment";
+import { useDisplay } from 'vuetify';
 
 const userStore = useUsers();
 const missionStore = useMission();
 const isTasksDialogOpen = ref(false);
 const isNewUserDialogOpen = ref(false);
+const breakpoint = useDisplay();
 interface UserTask {
   userId: number;
   fullName: string;
