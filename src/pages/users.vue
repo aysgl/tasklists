@@ -131,7 +131,7 @@ const userTasks = computed(() => {
           userId: user.id,
           fullName: user.fullName,
           username: user.username,
-          status: "atanmış",
+          status: task.status || "atanmış",
           delayedTasksCount: 0,
           tasks: [],
         });
