@@ -14,12 +14,11 @@
                 <span class="ms-2">{{ item.title }}</span>
               </div>
               <div>
-                <VBtn :disabled="!taskGroup.tasks.some(task => task.userId === formData.userId && task.id === item.id)"
-                  icon size="small" variant="text" @click="openTaskDialog(item)">
+                <VBtn :disabled="!isTaskEditable(item)" icon size="small" variant="text" @click="openTaskDialog(item)">
                   <IconPencil size="16" />
                 </VBtn>
-                <VBtn :disabled="!taskGroup.tasks.some(task => task.userId === formData.userId && task.id === item.id)"
-                  icon size="small" variant="text" @click="missionStore.deleteTask(item.id)">
+                <VBtn :disabled="!isTaskEditable(item)" icon size="small" variant="text"
+                  @click="missionStore.deleteTask(item.id)">
                   <IconTrash size="16" />
                 </VBtn>
               </div>
@@ -32,15 +31,14 @@
               <AssignAvatar :assignedBy="item.assignedBy" :assignedTo="item.assignedTo" />
               <v-menu open-on-hover>
                 <template v-slot:activator="{ props }">
-                  <v-btn
-                    :disabled="!taskGroup.tasks.some(task => task.userId === formData.userId && task.id === item.id)"
-                    :append-icon="IconChevronDown" color="primary" v-bind="props" class="rounded-pill" variant="tonal">
+                  <v-btn :disabled="!isTaskEditable(item)" :append-icon="IconChevronDown" color="primary" v-bind="props"
+                    class="rounded-pill" variant="tonal">
                     {{ item.status }}
                   </v-btn>
                 </template>
                 <v-list>
-                  <v-list-item v-for="(s, index) in status" :key="index" @click="selectStatus(s.status, item)">
-                    <v-list-item-title>{{ s.status }}</v-list-item-title>
+                  <v-list-item v-for="(s, index) in status" :key="index" @click="selectStatus(s, item)">
+                    <v-list-item-title>{{ s }}</v-list-item-title>
                   </v-list-item>
                 </v-list>
               </v-menu>
@@ -99,11 +97,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, watch, watchEffect } from 'vue';
-import { IconPencil, IconTrash, IconChevronDown } from '@tabler/icons-vue';
+import { ref, reactive, watch } from 'vue';
 import { useMission } from '@/stores/mission';
-import { useUsers } from '@/stores/users';
 import moment from 'moment';
+import { IconPencil, IconTrash, IconChevronDown } from '@tabler/icons-vue';
+import { useUsers } from '@/stores/users';
 
 const missionStore = useMission();
 const userStore = useUsers();
@@ -121,66 +119,51 @@ const formData = reactive({
   userId: 1
 });
 
-const status = ref<{ status: string }[]>([
-  { status: 'başarılı' },
-  { status: 'başarısız' },
-  { status: 'atanmış' },
-]);
-
-const tasks = ref(missionStore.missions.filter((t: any) => t.status === 'atanmış'));
-const completedTasks = ref(missionStore.missions.filter((t: any) => t.status === 'başarılı'));
-const unsuccessfulTasks = ref(missionStore.missions.filter((t: any) => t.status === 'başarısız'));
-const overdueSuccessfulTasks = ref(completedTasks.value.filter((t: any) => moment(t.endDate).isBefore(moment())));
-const overdueUnsuccessfulTasks = ref(unsuccessfulTasks.value.filter((t: any) => moment(t.endDate).isBefore(moment())));
+const status = ref(['başarılı', 'başarısız', 'atanmış']);
 
 const taskGroups = ref([
-  { title: 'Todo', tasks: tasks.value, color: 'primary' },
-  { title: 'Success', tasks: completedTasks.value, color: 'success' },
-  { title: 'Unsuccess', tasks: unsuccessfulTasks.value, color: 'error' },
-  { title: 'Due Success', tasks: overdueSuccessfulTasks.value, color: 'success' },
-  { title: 'Due Unsuccess', tasks: overdueUnsuccessfulTasks.value, color: 'error' }
+  { title: 'Todo', status: 'atanmış', color: 'primary' },
+  { title: 'Success', status: 'başarılı', color: 'success' },
+  { title: 'Unsuccess', status: 'başarısız', color: 'error' },
+  { title: 'Due Success', status: 'başarılı', color: 'success' },
+  { title: 'Due Unsuccess', status: 'başarısız', color: 'error' }
 ]);
 
-const filteredTaskGroups = computed(() => taskGroups.value);
+const filteredTaskGroups = computed(() => taskGroups.value.filter((group: any) => group.tasks.length > 0));
+
 
 const updateTaskGroups = () => {
-  tasks.value = missionStore.missions.filter((t: any) => t.status === 'atanmış');
-  completedTasks.value = missionStore.missions.filter((t: any) => t.status === 'başarılı');
-  unsuccessfulTasks.value = missionStore.missions.filter((t: any) => t.status === 'başarısız');
-  overdueSuccessfulTasks.value = completedTasks.value.filter((t: any) => moment(t.endDate).isBefore(moment()));
-  overdueUnsuccessfulTasks.value = unsuccessfulTasks.value.filter((t: any) => moment(t.endDate).isBefore(moment()));
+  taskGroups.value.forEach((group: any) => {
+    group.tasks = missionStore.missions.filter((t: any) => t.status === group.status);
 
-  taskGroups.value = [
-    { title: 'Todo', tasks: tasks.value, color: 'primary' },
-    { title: 'Success', tasks: completedTasks.value, color: 'success' },
-    { title: 'Unsuccess', tasks: unsuccessfulTasks.value, color: 'error' },
-    { title: 'Due Success', tasks: overdueSuccessfulTasks.value, color: 'success' },
-    { title: 'Due Unsuccess', tasks: overdueUnsuccessfulTasks.value, color: 'error' }
-  ];
+    if (group.title.includes('Due')) {
+      group.tasks = group.tasks.filter((t: any) => moment(t.endDate).isBefore(moment()));
+    }
+  });
 };
+
+const formatDate = (date: string) => moment(date).format('LL');
 
 const selectStatus = (selectedStatus: string, task: any) => {
   task.status = selectedStatus;
   updateTaskGroups();
 };
 
-const formatDate = (date: string) => moment(date).format('LL');
-
-
 const resetForm = () => {
-  Object.keys(formData).forEach(key => {
-    (formData as any)[key] = '';
+  Object.assign(formData, {
+    title: '', description: '', priority: '', startDate: moment().format('YYYY-MM-DD'),
+    endDate: moment().format('YYYY-MM-DD'), assignedBy: 'Ayşegül Avcu', assignedTo: '', status: 'atanmış', userId: 1
   });
-  formData.userId = 1;
 };
-
 
 const openTaskDialog = (item: any = null) => {
   resetForm();
-  selectedTaskId.value = item ? item.id : null;
+  selectedTaskId.value = item?.id || null;
   if (item) Object.assign(formData, item);
   missionStore.dialog = true;
 };
+
+const isTaskEditable = (task: any) => task.userId === formData.userId;
 
 const handleSaveTask = () => {
   if (!formData.title || !formData.priority || !formData.startDate || !formData.endDate) return;
@@ -190,7 +173,7 @@ const handleSaveTask = () => {
   if (selectedTaskId.value) {
     missionStore.updateTask(updatedTask);
   } else {
-    missionStore.addTask({ ...formData, id: Date.now(), userId: formData.userId });
+    missionStore.addTask(updatedTask);
   }
 
   missionStore.dialog = false;
@@ -198,23 +181,9 @@ const handleSaveTask = () => {
 };
 
 
-watchEffect(() => {
-  taskGroups.value = [
-    { title: 'Todo', tasks: tasks.value, color: 'primary' },
-    { title: 'Success', tasks: completedTasks.value, color: 'success' },
-    { title: 'Unsuccess', tasks: unsuccessfulTasks.value, color: 'error' },
-    { title: 'Due Success', tasks: overdueSuccessfulTasks.value, color: 'success' },
-    { title: 'Due Unsuccess', tasks: overdueUnsuccessfulTasks.value, color: 'error' }
-  ];
-});
+watch(() => missionStore.missions, updateTaskGroups, { deep: true, immediate: true });
+watch(() => formData.status, updateTaskGroups);
 
-watch(() => formData.status, () => {
-  updateTaskGroups();
-});
-
-watch(() => missionStore.missions, () => {
-  updateTaskGroups();
-}, { deep: true, immediate: true });
 </script>
 
 <style scoped lang="scss">
