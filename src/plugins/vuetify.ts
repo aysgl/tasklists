@@ -11,6 +11,7 @@ export default createVuetify({
   components: {
     ...components,
     ...labsComponents,
+    breakpoints: { mobile: 600, tablet: 960, desktop: 1280 },
   },
   theme: {
     defaultTheme: "light",

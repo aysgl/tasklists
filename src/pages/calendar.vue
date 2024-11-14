@@ -56,6 +56,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
+import { useDisplay } from "vuetify";
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -71,6 +72,7 @@ const missionStore = useMission();
 const userStore = useUsers()
 const calendarRef = ref(null);
 const minDateTime = ref(moment().format("YYYY-MM-DDTHH:mm"));
+const breakpoint = useDisplay();
 
 const modalTitle = ref("");
 
@@ -211,21 +213,21 @@ const handleDeleteEvent = async () => {
   closeModal();
 };
 
-
-
 const closeModal = () => {
   eventForm.value = {};
   missionStore.dialog = false;
 };
 
+
 // Calendar Options
 const calendarOptions = ref({
   plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
-  initialView: "dayGridMonth",
+  initialView: breakpoint?.xs?.value ? "listMonth" : "dayGridMonth",
   headerToolbar: {
     left: "prev,next today",
     center: "title",
-    right: "dayGridMonth,timeGridWeek,timeGridDay,listMonth",
+    right: breakpoint?.xs?.value ? "" : "dayGridMonth,timeGridWeek,timeGridDay,listMonth", // Mobilde sadece "prev,next" ve "today"
+
   },
   dateClick: handleDateClick,
   eventClick: handleEventClick,
@@ -257,7 +259,8 @@ const calendarOptions = ref({
       `,
     };
   },
-  minDate: moment().format("YYYY-MM-DD")
+  minDate: moment().format("YYYY-MM-DD"),
+  // responsive: true
 });
 
 watch(
@@ -289,7 +292,6 @@ watch(
   },
   { immediate: true }
 );
-
 </script>
 
 <style>

@@ -1,7 +1,7 @@
 <template>
   <VCard color="surface" flat>
     <VCardText class="pa-8">
-      <v-data-table :headers="headers" :items="userTasks" item-key="id" :items-per-page="10">
+      <v-data-table :headers="headers" :items="userTasks" item-key="id" :items-per-page="10" mobile>
         <template v-slot:[`item.fullName`]="{ item }">
           <VAvatar color="primary" variant="tonal">
             {{ item.fullName?.slice(0, 1) }}

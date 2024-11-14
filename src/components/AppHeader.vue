@@ -4,7 +4,7 @@
       <IconMenu @click.stop="handleIconMenuClick" class="me-2" />
       NARBULUT
     </v-col>
-    <v-col cols="auto">
+    <v-col cols="auto" class="d-md-block d-none">
       <v-breadcrumbs :items="breadcrumbs" class="mx-4"> </v-breadcrumbs>
     </v-col>
     <v-col class="d-flex justify-end">
